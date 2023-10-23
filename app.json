@@ -1,32 +1,48 @@
+
 {
-  "id": "4809702b-b2fa-4f9e-b9f2-c438c9baa458",
-  "name": "AVGCentralRepoBO",
-  "publisher": "Default publisher",
-  "version": "1.0.0.0",
+  "id": "5f6141b7-845d-40a6-b90b-0aa7dec4ac1c",
+  "name": "AVG BO Central App",
+  "publisher": "AllValue Holdings Corp.",
+  "version": "22.0.0.0",
   "brief": "",
   "description": "",
   "privacyStatement": "",
   "EULA": "",
   "help": "",
-  "url": "",
+  "url": "https://allvalue.com.ph/",
   "logo": "",
-  "dependencies": [],
+  "dependencies": [
+    {
+      "id": "5ecfc871-5d82-43f1-9c54-59685e82318d",
+      "name": "LS Central",
+      "publisher": "LS Retail",
+      "version": "22.0.0.0"
+    },
+    {
+      "id": "2a0547fa-f60f-401d-b1fe-c7c4be8fb230",
+      "name": "LS Central System App",
+      "publisher": "LS Retail",
+      "version": "22.0.0.0"
+    }
+  ],
   "screenshots": [],
-  "platform": "1.0.0.0",
-  "application": "22.0.0.0",
+  "platform": "20.0.0.0",
+  "application": "20.0.0.0",
   "idRanges": [
     {
       "from": 50100,
-      "to": 50149
+      "to": 50999
     }
   ],
   "resourceExposurePolicy": {
-    "allowDebugging": true,
-    "allowDownloadingSource": true,
-    "includeSourceInSymbolFile": true
+    "allowDebugging": false,
+    "allowDownloadingSource": false,
+    "includeSourceInSymbolFile": false,
+    "applyToDevExtension": false
   },
   "runtime": "11.0",
   "features": [
     "NoImplicitWith"
-  ]
+  ], 
+  "target": "OnPrem"
 }
