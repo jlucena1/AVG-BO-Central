@@ -12,262 +12,262 @@ codeunit 50100 "AVG BO Event Subs."
     end;
 
 
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"TransferOrder-Post (Yes/No)", OnBeforePost, '', false, false)]
-    // local procedure OnBeforePost(var TransHeader: Record "Transfer Header"; var IsHandled: Boolean; var TransferOrderPostShipment: Codeunit "TransferOrder-Post Shipment"; var TransferOrderPostReceipt: Codeunit "TransferOrder-Post Receipt"; var PostBatch: Boolean; var TransferOrderPost: Enum "Transfer Order Post");
-    // var
-    //     TransferLine: Record "Transfer Line";
-    //     Item: Record Item;
-    //     Location: Record Location;
-    //     TransferErrMsg: Label 'Return to Distribution Center is not Allowed!\Please check the included Items.';
-    // begin
-    //     IF Location.GET(TransHeader."Transfer-to Code") then
-    //         IF Location."AVG Distribution Center" then begin
-    //             TransferLine.setrange("Document No.", TransHeader."No.");
-    //             IF TransferLine.FindSet() then
-    //                 repeat
-    //                     IF Item.GET(TransferLine."Item No.") then
-    //                         IF Item."AVG Non Returnable" then
-    //                             Error(TransferErrMsg);
-    //                 until TransferLine.next = 0;
-    //         end;
-    // end;
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"TransferOrder-Post (Yes/No)", OnBeforePost, '', false, false)]
+    local procedure OnBeforePost(var TransHeader: Record "Transfer Header"; var IsHandled: Boolean; var TransferOrderPostShipment: Codeunit "TransferOrder-Post Shipment"; var TransferOrderPostReceipt: Codeunit "TransferOrder-Post Receipt"; var PostBatch: Boolean; var TransferOrderPost: Enum "Transfer Order Post");
+    var
+        TransferLine: Record "Transfer Line";
+        Item: Record Item;
+        Location: Record Location;
+        TransferErrMsg: Label 'Return to Distribution Center is not Allowed!\Please check the included Items.';
+    begin
+        IF Location.GET(TransHeader."Transfer-to Code") then
+            IF Location."AVG Distribution Center" then begin
+                TransferLine.setrange("Document No.", TransHeader."No.");
+                IF TransferLine.FindSet() then
+                    repeat
+                        IF Item.GET(TransferLine."Item No.") then
+                            IF Item."AVG Non Returnable" then
+                                Error(TransferErrMsg);
+                    until TransferLine.next = 0;
+            end;
+    end;
 
 
-    // [EventSubscriber(ObjectType::Page, Page::"Transfer Order", 'OnModifyRecordEvent', '', FALSE, FALSE)]
-    // local procedure NonWarehouseTransferReceivedFromNonWhse(var xRec: Record "Transfer Header"; var Rec: Record "Transfer Header"; var AllowModify: Boolean)
-    // var
-    //     TransferLine: Record "Transfer Line";
-    //     InventorySetup: Record "Inventory Setup";
-    //     Location: Record Location;
-    //     TransferPostReceipt: Codeunit "TransferOrder-Post Receipt";
-    // begin
+    [EventSubscriber(ObjectType::Page, Page::"Transfer Order", 'OnModifyRecordEvent', '', FALSE, FALSE)]
+    local procedure NonWarehouseTransferReceivedFromNonWhse(var xRec: Record "Transfer Header"; var Rec: Record "Transfer Header"; var AllowModify: Boolean)
+    var
+        TransferLine: Record "Transfer Line";
+        InventorySetup: Record "Inventory Setup";
+        Location: Record Location;
+        TransferPostReceipt: Codeunit "TransferOrder-Post Receipt";
+    begin
 
-    //     InventorySetup.GET;
-    //     Location.GET(Rec."Transfer-to Code");
+        InventorySetup.GET;
+        Location.GET(Rec."Transfer-to Code");
 
-    //     IF Location."Require Receive" THEN
-    //         EXIT;
+        IF Location."Require Receive" THEN
+            EXIT;
 
-    //     IF NOT InventorySetup."AVG Auto Rcv. NonWhse Transfer" THEN
-    //         EXIT;
+        IF NOT InventorySetup."AVG Auto Rcv. NonWhse Transfer" THEN
+            EXIT;
 
-    //     IF (Rec.Status = Rec.Status::Released) AND
-    //     (Rec."LSC Retail Status" = Rec."LSC Retail Status"::"To receive") THEN BEGIN
-    //         // (Rec."SPO Transfer Status" = Rec."LSCSPO Transfer Status"::Waiting) THEN BEGIN
-    //         TransferLine.RESET;
-    //         TransferLine.SETRANGE("Document No.", Rec."No.");
-    //         TransferLine.SETFILTER("Quantity Shipped", '<>%1', 0);
-    //         TransferLine.SETFILTER("Qty. in Transit", '<>%1', 0);
-    //         TransferLine.SETFILTER("Derived From Line No.", '%1', 0);
-    //         TransferLine.SETFILTER("Qty. to Receive", '<>%1', 0);
-    //         IF TransferLine.FINDSET THEN
-    //             REPEAT
-    //                 // IF Rec.lsc<> '' THEN
-    //                 //     Rec.SetStoreDocDim(1, Rec."Transfer-to Depart. Code");
-    //                 TransferPostReceipt.RUN(Rec);
-    //             UNTIL TransferLine.NEXT = 0;
-    //     END;
-    // end;
+        IF (Rec.Status = Rec.Status::Released) AND
+        (Rec."LSC Retail Status" = Rec."LSC Retail Status"::"To receive") THEN BEGIN
+            // (Rec."SPO Transfer Status" = Rec."LSCSPO Transfer Status"::Waiting) THEN BEGIN
+            TransferLine.RESET;
+            TransferLine.SETRANGE("Document No.", Rec."No.");
+            TransferLine.SETFILTER("Quantity Shipped", '<>%1', 0);
+            TransferLine.SETFILTER("Qty. in Transit", '<>%1', 0);
+            TransferLine.SETFILTER("Derived From Line No.", '%1', 0);
+            TransferLine.SETFILTER("Qty. to Receive", '<>%1', 0);
+            IF TransferLine.FINDSET THEN
+                REPEAT
+                    // IF Rec.lsc<> '' THEN
+                    //     Rec.SetStoreDocDim(1, Rec."Transfer-to Depart. Code");
+                    TransferPostReceipt.RUN(Rec);
+                UNTIL TransferLine.NEXT = 0;
+        END;
+    end;
 
-    // [EventSubscriber(ObjectType::Page, Page::"Transfer Order", 'OnModifyRecordEvent', '', FALSE, FALSE)]
-    // local procedure WarehouseTransferReceivedFromNonWhse(var xRec: Record "Transfer Header"; var Rec: Record "Transfer Header"; var AllowModify: Boolean)
-    // var
-    //     TransferLine: Record "Transfer Line";
-    //     WhseReceiptLine: Record "Warehouse Receipt Line";
-    //     WhseReceiptLine2: Record "Warehouse Receipt Line";
-    //     WhseActivityLine: Record "Warehouse Activity Line";
-    //     WhseActivityLine2: Record "Warehouse Activity Line";
-    //     InventorySetup: Record "Inventory Setup";
-    //     Location: Record Location;
-    //     TransferPostReceipt: Codeunit "TransferOrder-Post Receipt";
-    //     GetSourceDocInbound: Codeunit "Get Source Doc. Inbound";
-    //     WhseMgt: Codeunit "WMS Management";
-    //     WhsePostReceipt: Codeunit "Whse.-Post Receipt";
-    //     WhseActivityRegister: Codeunit "Whse.-Activity-Register";
-    // begin
-    //     InventorySetup.GET;
-    //     Location.GET(Rec."Transfer-to Code");
+    [EventSubscriber(ObjectType::Page, Page::"Transfer Order", 'OnModifyRecordEvent', '', FALSE, FALSE)]
+    local procedure WarehouseTransferReceivedFromNonWhse(var xRec: Record "Transfer Header"; var Rec: Record "Transfer Header"; var AllowModify: Boolean)
+    var
+        TransferLine: Record "Transfer Line";
+        WhseReceiptLine: Record "Warehouse Receipt Line";
+        WhseReceiptLine2: Record "Warehouse Receipt Line";
+        WhseActivityLine: Record "Warehouse Activity Line";
+        WhseActivityLine2: Record "Warehouse Activity Line";
+        InventorySetup: Record "Inventory Setup";
+        Location: Record Location;
+        TransferPostReceipt: Codeunit "TransferOrder-Post Receipt";
+        GetSourceDocInbound: Codeunit "Get Source Doc. Inbound";
+        WhseMgt: Codeunit "WMS Management";
+        WhsePostReceipt: Codeunit "Whse.-Post Receipt";
+        WhseActivityRegister: Codeunit "Whse.-Activity-Register";
+    begin
+        InventorySetup.GET;
+        Location.GET(Rec."Transfer-to Code");
 
-    //     IF NOT Location."Require Receive" THEN
-    //         EXIT;
-    //     IF NOT InventorySetup."AVG Auto Rcv. Whse Transfer" THEN
-    //         EXIT;
+        IF NOT Location."Require Receive" THEN
+            EXIT;
+        IF NOT InventorySetup."AVG Auto Rcv. Whse Transfer" THEN
+            EXIT;
 
-    //     IF (Rec.Status = Rec.Status::Released) AND
-    //     (Rec."LSC Retail Status" = Rec."LSC Retail Status"::"To receive") THEN BEGIN
-    //         // (Rec."SPO Transfer Status" = Rec."SPO Transfer Status"::Waiting) THEN BEGIN
-    //         TransferLine.RESET;
-    //         TransferLine.SETRANGE("Document No.", Rec."No.");
-    //         TransferLine.SETFILTER("Quantity Shipped", '<>%1', 0);
-    //         TransferLine.SETFILTER("Qty. in Transit", '<>%1', 0);
-    //         TransferLine.SETFILTER("Derived From Line No.", '%1', 0);
-    //         // TransferLine.SETFILTER(, '<>%1', 0);
-    //         IF TransferLine.FINDSET THEN
-    //             REPEAT
-    //                 GetSourceDocInbound.CreateFromInbndTransferOrder(Rec);
+        IF (Rec.Status = Rec.Status::Released) AND
+        (Rec."LSC Retail Status" = Rec."LSC Retail Status"::"To receive") THEN BEGIN
+            // (Rec."SPO Transfer Status" = Rec."SPO Transfer Status"::Waiting) THEN BEGIN
+            TransferLine.RESET;
+            TransferLine.SETRANGE("Document No.", Rec."No.");
+            TransferLine.SETFILTER("Quantity Shipped", '<>%1', 0);
+            TransferLine.SETFILTER("Qty. in Transit", '<>%1', 0);
+            TransferLine.SETFILTER("Derived From Line No.", '%1', 0);
+            // TransferLine.SETFILTER(, '<>%1', 0);
+            IF TransferLine.FINDSET THEN
+                REPEAT
+                    GetSourceDocInbound.CreateFromInbndTransferOrder(Rec);
 
-    //                 WhseReceiptLine.RESET;
-    //                 WhseReceiptLine.SETRANGE("Source No.", Rec."No.");
-    //                 WhseReceiptLine.SETRANGE("Source Document", WhseReceiptLine."Source Document"::"Inbound Transfer");
-    //                 IF WhseReceiptLine.FINDSET THEN
-    //                     REPEAT
-    //                         WhseReceiptLine2.COPY(WhseReceiptLine);
-    //                         WhsePostReceipt.RUN(WhseReceiptLine2);
-    //                         WhsePostReceipt.GetResultMessage;
-    //                         CLEAR(WhsePostReceipt);
-    //                     UNTIL WhseReceiptLine.NEXT = 0;
+                    WhseReceiptLine.RESET;
+                    WhseReceiptLine.SETRANGE("Source No.", Rec."No.");
+                    WhseReceiptLine.SETRANGE("Source Document", WhseReceiptLine."Source Document"::"Inbound Transfer");
+                    IF WhseReceiptLine.FINDSET THEN
+                        REPEAT
+                            WhseReceiptLine2.COPY(WhseReceiptLine);
+                            WhsePostReceipt.RUN(WhseReceiptLine2);
+                            WhsePostReceipt.GetResultMessage;
+                            CLEAR(WhsePostReceipt);
+                        UNTIL WhseReceiptLine.NEXT = 0;
 
-    //                 IF Location."Require Put-away" THEN BEGIN
-    //                     WhseActivityLine.RESET;
-    //                     WhseActivityLine.SETRANGE("Source No.", Rec."No.");
-    //                     WhseActivityLine.SETRANGE("Source Document", WhseActivityLine."Source Document"::"Inbound Transfer");
-    //                     IF WhseActivityLine.FINDSET THEN
-    //                         REPEAT
-    //                             WhseActivityLine2.COPY(WhseActivityLine);
-    //                             IF (WhseActivityLine2."Activity Type" = WhseActivityLine2."Activity Type"::"Invt. Movement") AND
-    //                                NOT (WhseActivityLine2."Source Document" IN [WhseActivityLine2."Source Document"::" ",
-    //                                                           WhseActivityLine2."Source Document"::"Prod. Consumption",
-    //                                                           WhseActivityLine2."Source Document"::"Assembly Consumption"])
-    //                             THEN
-    //                                 ERROR(Text002, WhseActivityLine2."Source Document");
+                    IF Location."Require Put-away" THEN BEGIN
+                        WhseActivityLine.RESET;
+                        WhseActivityLine.SETRANGE("Source No.", Rec."No.");
+                        WhseActivityLine.SETRANGE("Source Document", WhseActivityLine."Source Document"::"Inbound Transfer");
+                        IF WhseActivityLine.FINDSET THEN
+                            REPEAT
+                                WhseActivityLine2.COPY(WhseActivityLine);
+                                IF (WhseActivityLine2."Activity Type" = WhseActivityLine2."Activity Type"::"Invt. Movement") AND
+                                   NOT (WhseActivityLine2."Source Document" IN [WhseActivityLine2."Source Document"::" ",
+                                                              WhseActivityLine2."Source Document"::"Prod. Consumption",
+                                                              WhseActivityLine2."Source Document"::"Assembly Consumption"])
+                                THEN
+                                    ERROR(Text002, WhseActivityLine2."Source Document");
 
-    //                             WhseMgt.CheckBalanceQtyToHandle(WhseActivityLine2);
+                                WhseMgt.CheckBalanceQtyToHandle(WhseActivityLine2);
 
-    //                             //IF NOT CONFIRM(RSAText001,FALSE,LrecWhseActivLine."Activity Type") THEN
-    //                             //  EXIT;
+                                //IF NOT CONFIRM(RSAText001,FALSE,LrecWhseActivLine."Activity Type") THEN
+                                //  EXIT;
 
-    //                             WhseActivityRegister.RUN(WhseActivityLine2);
-    //                             CLEAR(WhseActivityRegister);
-    //                         UNTIL WhseActivityLine.NEXT = 0;
-    //                 END;
-    //             UNTIL TransferLine.NEXT = 0;
-    //     END;
-    // end;
+                                WhseActivityRegister.RUN(WhseActivityLine2);
+                                CLEAR(WhseActivityRegister);
+                            UNTIL WhseActivityLine.NEXT = 0;
+                    END;
+                UNTIL TransferLine.NEXT = 0;
+        END;
+    end;
 
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse.-Post Shipment (Yes/No)", OnAfterCode, '', false, false)]
-    // local procedure NonWarehouseTransferReceivedFromWhse(var WarehouseShipmentLine: Record "Warehouse Shipment Line");
-    // var
-    //     TransferHeader: Record "Transfer Header";
-    //     TransferLine: Record "Transfer Line";
-    //     WhseReceiptLine: Record "Warehouse Receipt Line";
-    //     WhseReceiptLine2: Record "Warehouse Receipt Line";
-    //     WhseActivityLine: Record "Warehouse Activity Line";
-    //     WhseActivityLine2: Record "Warehouse Activity Line";
-    //     InventorySetup: Record "Inventory Setup";
-    //     Location: Record Location;
-    //     TransferPostReceipt: Codeunit "TransferOrder-Post Receipt";
-    //     GetSourceDocInbound: Codeunit "Get Source Doc. Inbound";
-    //     WhseMgt: Codeunit "WMS Management";
-    //     WhsePostReceipt: Codeunit "Whse.-Post Receipt";
-    //     WhseActivityRegister: Codeunit "Whse.-Activity-Register";
-    // begin
-    //     IF NOT TransferHeader.GET(WarehouseShipmentLine."Source No.") THEN
-    //         EXIT;
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse.-Post Shipment (Yes/No)", OnAfterCode, '', false, false)]
+    local procedure NonWarehouseTransferReceivedFromWhse(var WarehouseShipmentLine: Record "Warehouse Shipment Line");
+    var
+        TransferHeader: Record "Transfer Header";
+        TransferLine: Record "Transfer Line";
+        WhseReceiptLine: Record "Warehouse Receipt Line";
+        WhseReceiptLine2: Record "Warehouse Receipt Line";
+        WhseActivityLine: Record "Warehouse Activity Line";
+        WhseActivityLine2: Record "Warehouse Activity Line";
+        InventorySetup: Record "Inventory Setup";
+        Location: Record Location;
+        TransferPostReceipt: Codeunit "TransferOrder-Post Receipt";
+        GetSourceDocInbound: Codeunit "Get Source Doc. Inbound";
+        WhseMgt: Codeunit "WMS Management";
+        WhsePostReceipt: Codeunit "Whse.-Post Receipt";
+        WhseActivityRegister: Codeunit "Whse.-Activity-Register";
+    begin
+        IF NOT TransferHeader.GET(WarehouseShipmentLine."Source No.") THEN
+            EXIT;
 
-    //     InventorySetup.GET;
-    //     Location.GET(TransferHeader."Transfer-to Code");
+        InventorySetup.GET;
+        Location.GET(TransferHeader."Transfer-to Code");
 
-    //     IF Location."Require Receive" THEN
-    //         EXIT;
-    //     IF NOT InventorySetup."AVG Auto Rcv. NonWhse Transfer" THEN
-    //         EXIT;
+        IF Location."Require Receive" THEN
+            EXIT;
+        IF NOT InventorySetup."AVG Auto Rcv. NonWhse Transfer" THEN
+            EXIT;
 
-    //     IF (TransferHeader.Status = TransferHeader.Status::Released) AND
-    //     (TransferHeader."LSC Retail Status" = TransferHeader."LSC Retail Status"::"To receive") THEN BEGIN
-    //         // (TransferHeader."SPO Transfer Status" = TransferHeader."SPO Transfer Status"::Waiting) THEN BEGIN
-    //         TransferLine.RESET;
-    //         TransferLine.SETRANGE("Document No.", TransferHeader."No.");
-    //         TransferLine.SETFILTER("Quantity Shipped", '<>%1', 0);
-    //         TransferLine.SETFILTER("Qty. in Transit", '<>%1', 0);
-    //         TransferLine.SETFILTER("Derived From Line No.", '%1', 0);
-    //         TransferLine.SETFILTER("Qty. to Receive", '<>%1', 0);
-    //         IF TransferLine.FINDSET THEN
-    //             REPEAT
-    //                 // IF TransferHeader."Transfer-to Depart. Code" <> '' THEN
-    //                 //     TransferHeader.SetStoreDocDim(1, TransferHeader."Transfer-to Depart. Code");
-    //                 TransferPostReceipt.RUN(TransferHeader);
-    //             UNTIL TransferLine.NEXT = 0;
-    //     END;
-    // end;
+        IF (TransferHeader.Status = TransferHeader.Status::Released) AND
+        (TransferHeader."LSC Retail Status" = TransferHeader."LSC Retail Status"::"To receive") THEN BEGIN
+            // (TransferHeader."SPO Transfer Status" = TransferHeader."SPO Transfer Status"::Waiting) THEN BEGIN
+            TransferLine.RESET;
+            TransferLine.SETRANGE("Document No.", TransferHeader."No.");
+            TransferLine.SETFILTER("Quantity Shipped", '<>%1', 0);
+            TransferLine.SETFILTER("Qty. in Transit", '<>%1', 0);
+            TransferLine.SETFILTER("Derived From Line No.", '%1', 0);
+            TransferLine.SETFILTER("Qty. to Receive", '<>%1', 0);
+            IF TransferLine.FINDSET THEN
+                REPEAT
+                    // IF TransferHeader."Transfer-to Depart. Code" <> '' THEN
+                    //     TransferHeader.SetStoreDocDim(1, TransferHeader."Transfer-to Depart. Code");
+                    TransferPostReceipt.RUN(TransferHeader);
+                UNTIL TransferLine.NEXT = 0;
+        END;
+    end;
 
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse.-Post Shipment (Yes/No)", OnAfterCode, '', false, false)]
-    // local procedure WarehouseTransferReceivedFromWhse(var WarehouseShipmentLine: Record "Warehouse Shipment Line");
-    // var
-    //     TransferHeader: Record "Transfer Header";
-    //     TransferLine: Record "Transfer Line";
-    //     WhseReceiptLine: Record "Warehouse Receipt Line";
-    //     WhseReceiptLine2: Record "Warehouse Receipt Line";
-    //     WhseActivityLine: Record "Warehouse Activity Line";
-    //     WhseActivityLine2: Record "Warehouse Activity Line";
-    //     InventorySetup: Record "Inventory Setup";
-    //     Location: Record Location;
-    //     TransferPostReceipt: Codeunit "TransferOrder-Post Receipt";
-    //     GetSourceDocInbound: Codeunit "Get Source Doc. Inbound";
-    //     WhseMgt: Codeunit "WMS Management";
-    //     WhsePostReceipt: Codeunit "Whse.-Post Receipt";
-    //     WhseActivityRegister: Codeunit "Whse.-Activity-Register";
-    // begin
-    //     IF NOT TransferHeader.GET(WarehouseShipmentLine."Source No.") THEN
-    //         EXIT;
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse.-Post Shipment (Yes/No)", OnAfterCode, '', false, false)]
+    local procedure WarehouseTransferReceivedFromWhse(var WarehouseShipmentLine: Record "Warehouse Shipment Line");
+    var
+        TransferHeader: Record "Transfer Header";
+        TransferLine: Record "Transfer Line";
+        WhseReceiptLine: Record "Warehouse Receipt Line";
+        WhseReceiptLine2: Record "Warehouse Receipt Line";
+        WhseActivityLine: Record "Warehouse Activity Line";
+        WhseActivityLine2: Record "Warehouse Activity Line";
+        InventorySetup: Record "Inventory Setup";
+        Location: Record Location;
+        TransferPostReceipt: Codeunit "TransferOrder-Post Receipt";
+        GetSourceDocInbound: Codeunit "Get Source Doc. Inbound";
+        WhseMgt: Codeunit "WMS Management";
+        WhsePostReceipt: Codeunit "Whse.-Post Receipt";
+        WhseActivityRegister: Codeunit "Whse.-Activity-Register";
+    begin
+        IF NOT TransferHeader.GET(WarehouseShipmentLine."Source No.") THEN
+            EXIT;
 
-    //     InventorySetup.GET;
-    //     IF Location.GET(TransferHeader."Transfer-to Code") THEN;
+        InventorySetup.GET;
+        IF Location.GET(TransferHeader."Transfer-to Code") THEN;
 
-    //     IF NOT Location."Require Receive" THEN
-    //         EXIT;
-    //     IF NOT InventorySetup."AVG Auto Rcv. Whse Transfer" THEN
-    //         EXIT;
+        IF NOT Location."Require Receive" THEN
+            EXIT;
+        IF NOT InventorySetup."AVG Auto Rcv. Whse Transfer" THEN
+            EXIT;
 
-    //     IF (TransferHeader.Status = TransferHeader.Status::Released) AND
-    //     (TransferHeader."LSC Retail Status" = TransferHeader."LSC Retail Status"::"To receive") THEN BEGIN
-    //         // (TransferHeader."SPO Transfer Status" = TransferHeader."SPO Transfer Status"::Waiting) THEN BEGIN
-    //         TransferLine.RESET;
-    //         TransferLine.SETRANGE("Document No.", TransferHeader."No.");
-    //         TransferLine.SETFILTER("Quantity Shipped", '<>%1', 0);
-    //         TransferLine.SETFILTER("Qty. in Transit", '<>%1', 0);
-    //         TransferLine.SETFILTER("Derived From Line No.", '%1', 0);
-    //         // TransferLine.SETFILTER("Actual Qty. to Receive", '<>%1', 0);
-    //         IF TransferLine.FINDSET THEN
-    //             REPEAT
-    //                 GetSourceDocInbound.CreateFromInbndTransferOrder(TransferHeader);
+        IF (TransferHeader.Status = TransferHeader.Status::Released) AND
+        (TransferHeader."LSC Retail Status" = TransferHeader."LSC Retail Status"::"To receive") THEN BEGIN
+            // (TransferHeader."SPO Transfer Status" = TransferHeader."SPO Transfer Status"::Waiting) THEN BEGIN
+            TransferLine.RESET;
+            TransferLine.SETRANGE("Document No.", TransferHeader."No.");
+            TransferLine.SETFILTER("Quantity Shipped", '<>%1', 0);
+            TransferLine.SETFILTER("Qty. in Transit", '<>%1', 0);
+            TransferLine.SETFILTER("Derived From Line No.", '%1', 0);
+            // TransferLine.SETFILTER("Actual Qty. to Receive", '<>%1', 0);
+            IF TransferLine.FINDSET THEN
+                REPEAT
+                    GetSourceDocInbound.CreateFromInbndTransferOrder(TransferHeader);
 
-    //                 WhseReceiptLine.RESET;
-    //                 WhseReceiptLine.SETRANGE("Source No.", TransferHeader."No.");
-    //                 WhseReceiptLine.SETRANGE("Source Document", WhseReceiptLine."Source Document"::"Inbound Transfer");
-    //                 IF WhseReceiptLine.FINDSET THEN
-    //                     REPEAT
-    //                         WhseReceiptLine2.COPY(WhseReceiptLine);
-    //                         WhsePostReceipt.RUN(WhseReceiptLine2);
-    //                         WhsePostReceipt.GetResultMessage;
-    //                         CLEAR(WhsePostReceipt);
-    //                     UNTIL WhseReceiptLine.NEXT = 0;
+                    WhseReceiptLine.RESET;
+                    WhseReceiptLine.SETRANGE("Source No.", TransferHeader."No.");
+                    WhseReceiptLine.SETRANGE("Source Document", WhseReceiptLine."Source Document"::"Inbound Transfer");
+                    IF WhseReceiptLine.FINDSET THEN
+                        REPEAT
+                            WhseReceiptLine2.COPY(WhseReceiptLine);
+                            WhsePostReceipt.RUN(WhseReceiptLine2);
+                            WhsePostReceipt.GetResultMessage;
+                            CLEAR(WhsePostReceipt);
+                        UNTIL WhseReceiptLine.NEXT = 0;
 
-    //                 IF Location."Require Put-away" THEN BEGIN
-    //                     WhseActivityLine.RESET;
-    //                     WhseActivityLine.SETRANGE("Source No.", TransferHeader."No.");
-    //                     WhseActivityLine.SETRANGE("Source Document", WhseActivityLine."Source Document"::"Inbound Transfer");
-    //                     IF WhseActivityLine.FINDSET THEN
-    //                         REPEAT
-    //                             WhseActivityLine2.COPY(WhseActivityLine);
-    //                             IF (WhseActivityLine2."Activity Type" = WhseActivityLine2."Activity Type"::"Invt. Movement") AND
-    //                                NOT (WhseActivityLine2."Source Document" IN [WhseActivityLine2."Source Document"::" ",
-    //                                                           WhseActivityLine2."Source Document"::"Prod. Consumption",
-    //                                                           WhseActivityLine2."Source Document"::"Assembly Consumption"])
-    //                             THEN
-    //                                 ERROR(Text002, WhseActivityLine2."Source Document");
+                    IF Location."Require Put-away" THEN BEGIN
+                        WhseActivityLine.RESET;
+                        WhseActivityLine.SETRANGE("Source No.", TransferHeader."No.");
+                        WhseActivityLine.SETRANGE("Source Document", WhseActivityLine."Source Document"::"Inbound Transfer");
+                        IF WhseActivityLine.FINDSET THEN
+                            REPEAT
+                                WhseActivityLine2.COPY(WhseActivityLine);
+                                IF (WhseActivityLine2."Activity Type" = WhseActivityLine2."Activity Type"::"Invt. Movement") AND
+                                   NOT (WhseActivityLine2."Source Document" IN [WhseActivityLine2."Source Document"::" ",
+                                                              WhseActivityLine2."Source Document"::"Prod. Consumption",
+                                                              WhseActivityLine2."Source Document"::"Assembly Consumption"])
+                                THEN
+                                    ERROR(Text002, WhseActivityLine2."Source Document");
 
-    //                             WhseMgt.CheckBalanceQtyToHandle(WhseActivityLine2);
+                                WhseMgt.CheckBalanceQtyToHandle(WhseActivityLine2);
 
-    //                             //IF NOT CONFIRM(RSAText001,FALSE,LrecWhseActivLine."Activity Type") THEN
-    //                             //  EXIT;
+                                //IF NOT CONFIRM(RSAText001,FALSE,LrecWhseActivLine."Activity Type") THEN
+                                //  EXIT;
 
-    //                             WhseActivityRegister.RUN(WhseActivityLine2);
-    //                             CLEAR(WhseActivityRegister);
-    //                         UNTIL WhseActivityLine.NEXT = 0;
-    //                 END;
-    //             UNTIL TransferLine.NEXT = 0;
-    //     END;
-    // end;
+                                WhseActivityRegister.RUN(WhseActivityLine2);
+                                CLEAR(WhseActivityRegister);
+                            UNTIL WhseActivityLine.NEXT = 0;
+                    END;
+                UNTIL TransferLine.NEXT = 0;
+        END;
+    end;
 
     [EventSubscriber(ObjectType::Table, Database::"Transfer Shipment Header", OnBeforePrintRecords, '', false, false)]
     local procedure OnBeforePrintRecords(var TransShptHeader: Record "Transfer Shipment Header"; ShowRequestPage: Boolean; var IsHandled: Boolean);
